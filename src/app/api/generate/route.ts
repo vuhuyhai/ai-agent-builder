@@ -1,10 +1,11 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { generateText } from 'ai'
+import { google } from '@ai-sdk/google'
 import { buildGenerationPrompt, parseOutputDocs } from '@/lib/generatePrompt'
 import { toSafeError } from '@/lib/apiError'
 import { Answer, OutputDocs } from '@/types/chat'
 import { TOTAL_QUESTIONS } from '@/lib/prompts/questions'
 
-// Node.js runtime required — Edge runtime blocks Anthropic SDK + Prisma (Phase 3)
+// Node.js runtime required — Edge runtime blocks Prisma (Phase 3)
 export const runtime = 'nodejs'
 
 const MAX_ANSWER_LENGTH = 2000
@@ -42,9 +43,9 @@ function validateRequest(body: unknown): GenerateRequestBody {
 
 
 export async function POST(req: Request): Promise<Response> {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return Response.json(
-      { error: 'ANTHROPIC_API_KEY is not configured' },
+      { error: 'GOOGLE_GENERATIVE_AI_API_KEY is not configured' },
       { status: 500 }
     )
   }
@@ -59,32 +60,25 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const prompt = buildGenerationPrompt(body.answers)
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 8192, // 3 full markdown docs need room; 4096 frequently truncates
-      messages: [{ role: 'user', content: prompt }],
+    const response = await generateText({
+      model: google('gemini-2.0-flash'),
+      maxOutputTokens: 8192,
+      prompt,
     })
 
-    // Extract text from response
-    const firstBlock = response.content[0]
-    if (!firstBlock || firstBlock.type !== 'text') {
-      throw new Error('Unexpected response format from Anthropic API')
-    }
-
-    const docs: OutputDocs = parseOutputDocs(firstBlock.text)
+    const docs: OutputDocs = parseOutputDocs(response.text)
 
     // If ALL three docs are empty, parsing failed — return a clear error
     if (!docs.claudeMd && !docs.planMd && !docs.bootstrapPrompt) {
-      console.error('[/api/generate] All docs empty — stop_reason:', response.stop_reason)
+      console.error('[/api/generate] All docs empty — finish_reason:', response.finishReason)
       throw new Error('Document generation produced no output. Please try again.')
     }
 
     // Log partial output for debugging (at least one doc missing)
     if (!docs.claudeMd || !docs.planMd || !docs.bootstrapPrompt) {
-      console.warn('[/api/generate] Partial output — stop_reason:', response.stop_reason)
+      console.warn('[/api/generate] Partial output — finish_reason:', response.finishReason)
     }
 
     return Response.json(docs)

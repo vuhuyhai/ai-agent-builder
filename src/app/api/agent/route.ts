@@ -1,5 +1,5 @@
 import { streamText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { google } from '@ai-sdk/google'
 import { buildSystemPrompt } from '@/lib/prompts/system'
 import { TOTAL_QUESTIONS } from '@/lib/prompts/questions'
 import { toSafeError } from '@/lib/apiError'
@@ -59,9 +59,9 @@ function validateRequest(body: unknown): AgentRequestBody {
 
 
 export async function POST(req: Request): Promise<Response> {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return new Response(
-      JSON.stringify({ error: 'ANTHROPIC_API_KEY is not configured' }),
+      JSON.stringify({ error: 'GOOGLE_GENERATIVE_AI_API_KEY is not configured' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
@@ -87,7 +87,7 @@ export async function POST(req: Request): Promise<Response> {
     }))
 
     const result = streamText({
-      model: anthropic('claude-opus-4-6'),
+      model: google('gemini-2.0-flash'),
       system: systemPrompt,
       messages: sdkMessages,
       onError: ({ error }) => {

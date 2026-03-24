@@ -1,5 +1,9 @@
 import { streamText } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+
+const google = createGoogleGenerativeAI({
+  baseURL: 'https://generativelanguage.googleapis.com/v1',
+})
 import { buildSystemPrompt } from '@/lib/prompts/system'
 import { TOTAL_QUESTIONS } from '@/lib/prompts/questions'
 import { toSafeError } from '@/lib/apiError'
@@ -87,7 +91,7 @@ export async function POST(req: Request): Promise<Response> {
     }))
 
     const result = streamText({
-      model: google('gemini-2.0-flash-lite'),
+      model: google('gemini-1.5-flash'),
       system: systemPrompt,
       messages: sdkMessages,
       onError: ({ error }) => {

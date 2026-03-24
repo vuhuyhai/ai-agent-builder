@@ -1,5 +1,9 @@
 import { generateText } from 'ai'
-import { google } from '@ai-sdk/google'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+
+const google = createGoogleGenerativeAI({
+  baseURL: 'https://generativelanguage.googleapis.com/v1',
+})
 import { buildGenerationPrompt, parseOutputDocs } from '@/lib/generatePrompt'
 import { toSafeError } from '@/lib/apiError'
 import { Answer, OutputDocs } from '@/types/chat'
@@ -63,7 +67,7 @@ export async function POST(req: Request): Promise<Response> {
     const prompt = buildGenerationPrompt(body.answers)
 
     const response = await generateText({
-      model: google('gemini-2.0-flash-lite'),
+      model: google('gemini-1.5-flash'),
       maxOutputTokens: 8192,
       prompt,
     })

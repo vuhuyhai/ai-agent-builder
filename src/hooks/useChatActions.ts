@@ -178,15 +178,24 @@ export function useChatActions({ input, setInput, attachedFile, clearAttachedFil
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
+      let receivedContent = false
       try {
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
           const text = decoder.decode(value, { stream: true })
-          if (text) appendToLastAssistant(text)
+          if (text) {
+            appendToLastAssistant(text)
+            receivedContent = true
+          }
         }
       } finally {
         reader.releaseLock()
+      }
+
+      // If stream closed with no content, the API likely returned an error silently
+      if (!receivedContent) {
+        throw new Error('AI không phản hồi. Có thể tài khoản Anthropic chưa có credit API.')
       }
 
       // Read fresh state — avoid stale closure after a long stream

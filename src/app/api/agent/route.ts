@@ -90,6 +90,9 @@ export async function POST(req: Request): Promise<Response> {
       model: anthropic('claude-opus-4-6'),
       system: systemPrompt,
       messages: sdkMessages,
+      onError: ({ error }) => {
+        console.error('[/api/agent] stream error:', error)
+      },
     })
 
     return result.toTextStreamResponse()

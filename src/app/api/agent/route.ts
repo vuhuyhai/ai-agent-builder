@@ -87,7 +87,7 @@ export async function POST(req: Request): Promise<Response> {
     }))
 
     const result = streamText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-2.0-flash-lite'),
       system: systemPrompt,
       messages: sdkMessages,
       onError: ({ error }) => {

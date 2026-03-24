@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<Response> {
     const prompt = buildGenerationPrompt(body.answers)
 
     const response = await generateText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-2.0-flash-lite'),
       maxOutputTokens: 8192,
       prompt,
     })

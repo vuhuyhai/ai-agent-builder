@@ -17,7 +17,7 @@ function headerStatusText(phase: ChatPhase, isGenerating: boolean, answersCount:
   if (phase === 'questioning') return `Câu hỏi ${Math.min(answersCount + 1, TOTAL_QUESTIONS)}/${TOTAL_QUESTIONS}`
   if (isGenerating) return '⏳ Đang tạo tài liệu...'
   if (phase === 'generation') return '✅ Thu thập xong — nhấn Generate'
-  return '✅ Tài liệu đã sẵn sàng'
+  return '✅ Cursor Prompts đã sẵn sàng'
 }
 
 export function ChatInterface() {

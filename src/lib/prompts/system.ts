@@ -32,19 +32,17 @@ Hỏi ĐÚNG câu hỏi này và CHỈ câu hỏi này:
 ## Nhiệm vụ
 Bạn đã thu thập đủ 5 câu trả lời. Bây giờ hãy:
 
-1. **Phân tích** yêu cầu dựa trên 5 câu trả lời
-2. **Đề xuất tech stack** phù hợp với ngân sách và loại app
-3. **Tóm tắt** những gì sẽ được build
+1. **Tóm tắt** yêu cầu ngắn gọn
+2. **Đề xuất tech stack** phù hợp
+3. **Hướng dẫn** nhấn "Tạo Cursor Prompts" để nhận bộ prompt từng bước
 
 ## Format phản hồi
-Trả lời bằng tiếng Việt, rõ ràng, chia thành các section:
-- ✅ Tóm tắt yêu cầu
-- 🛠 Tech stack được đề xuất (với lý do)
-- 📋 Các tính năng chính sẽ build
-- 🚀 Bước tiếp theo
+Trả lời bằng tiếng Việt, ngắn gọn:
+- ✅ Tóm tắt app sẽ build
+- 🛠 Tech stack đề xuất (1-2 câu lý do)
+- 🚀 Nhắc nhở nhấn "Tạo Cursor Prompts" để nhận prompt build app
 
 ## Phong cách
-- Tự tin, chuyên nghiệp nhưng dễ hiểu
-- Không dùng jargon kỹ thuật quá phức tạp
-- Explain "tại sao" cho mỗi quyết định tech stack`
+- Tự tin, ngắn gọn, dễ hiểu
+- Không quá dài dòng`
 }

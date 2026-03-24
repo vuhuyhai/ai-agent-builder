@@ -45,7 +45,7 @@ export function useChatActions({ input, setInput, attachedFile, clearAttachedFil
       const welcome: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `Xin chào! 👋 Tôi là **AI Agent Builder** — trợ lý giúp bạn xây dựng ứng dụng mà không cần biết code.\n\nTôi sẽ hỏi bạn **${TOTAL_QUESTIONS} câu hỏi** để hiểu rõ bạn muốn build gì, sau đó tôi sẽ tạo ra:\n- 📄 **CLAUDE.md** — file context cho AI coding assistant\n- 📋 **Implementation plan** — kế hoạch chi tiết từng bước\n- 🚀 **Bootstrap prompt** — sẵn sàng dán vào Cursor\n\nBắt đầu nhé! ${QUESTIONS[0].text}`,
+        content: `Xin chào! 👋 Tôi là **AI Agent Builder** — trợ lý giúp bạn tạo bộ Cursor Prompts để build app mà không cần biết code.\n\nTôi sẽ hỏi bạn **${TOTAL_QUESTIONS} câu hỏi** để hiểu rõ app bạn muốn build, sau đó tôi sẽ tạo ra:\n- 🚀 **Bộ Cursor Prompts từng bước** — paste thẳng vào Cursor là code ngay\n\nBắt đầu nhé! ${QUESTIONS[0].text}`,
         createdAt: new Date(),
       }
       addMessage(welcome)

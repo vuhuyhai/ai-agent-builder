@@ -9,7 +9,8 @@ import { Message } from '@/types/chat'
 export const runtime = 'nodejs'
 
 const MAX_MESSAGES = 30
-const MAX_CONTENT_LENGTH = 8000
+// Raised from 8000 to accommodate file attachments (up to ~30K extracted chars + message)
+const MAX_CONTENT_LENGTH = 35_000
 
 interface AgentRequestBody {
   messages: Message[]

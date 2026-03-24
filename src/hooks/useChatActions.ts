@@ -4,19 +4,23 @@ import { useRef, useEffect, useCallback, KeyboardEvent } from 'react'
 import { toast } from 'sonner'
 import { useChatStore } from '@/store/chatStore'
 import { QUESTIONS, TOTAL_QUESTIONS } from '@/lib/prompts/questions'
-import { Message } from '@/types/chat'
+import { Message, AttachedFile } from '@/types/chat'
 
 interface UseChatActionsProps {
   input: string
   setInput: (value: string) => void
+  attachedFile?: AttachedFile | null
+  clearAttachedFile?: () => void
 }
 
-export function useChatActions({ input, setInput }: UseChatActionsProps) {
+export function useChatActions({ input, setInput, attachedFile, clearAttachedFile }: UseChatActionsProps) {
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   // Ref-for-prop pattern: lets useCallback deps stay stable while always reading latest input
   const inputRef = useRef(input)
   inputRef.current = input
+  const attachedFileRef = useRef(attachedFile)
+  attachedFileRef.current = attachedFile
 
   const {
     addMessage,
@@ -100,28 +104,41 @@ export function useChatActions({ input, setInput }: UseChatActionsProps) {
   // Reads input via ref + store state via getState() — stable, never recreated
   const sendMessage = useCallback(async () => {
     const trimmed = inputRef.current.trim()
-    if (!trimmed || useChatStore.getState().isStreaming) return
+    const file = attachedFileRef.current
+
+    // Require at least text OR a file attachment
+    if (!trimmed && !file) return
+    if (useChatStore.getState().isStreaming) return
 
     const questionIndexAtSubmit = useChatStore.getState().currentQuestionIndex
     const phaseAtSubmit = useChatStore.getState().phase
 
+    // Build message content — append extracted file text if present
+    let messageContent = trimmed
+    if (file) {
+      const fileBlock = `\n\n---\n📎 **${file.name}** (${(file.size / 1024).toFixed(0)} KB)${file.truncated ? ' *(nội dung đã được cắt bớt)*' : ''}\n\n${file.extractedText}`
+      messageContent = trimmed ? `${trimmed}${fileBlock}` : `Tôi đã đính kèm tài liệu này:${fileBlock}`
+    }
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: trimmed,
+      content: messageContent,
       createdAt: new Date(),
     }
 
+    // Store the plain text answer (without appended file content)
     if (phaseAtSubmit === 'questioning' && questionIndexAtSubmit < TOTAL_QUESTIONS) {
       addAnswer({
         questionIndex: questionIndexAtSubmit,
         question: QUESTIONS[questionIndexAtSubmit].text,
-        answer: trimmed,
+        answer: trimmed || `[đính kèm: ${file?.name ?? 'tài liệu'}]`,
       })
     }
 
     addMessage(userMessage)
     setInput('')
+    clearAttachedFile?.()
     setStreaming(true)
 
     const assistantMessage: Message = {
@@ -195,7 +212,7 @@ export function useChatActions({ input, setInput }: UseChatActionsProps) {
         textareaRef.current?.focus()
       }
     }
-  }, [setInput, addMessage, appendToLastAssistant, setStreaming, setPhase, incrementQuestion, addAnswer])
+  }, [setInput, addMessage, appendToLastAssistant, setStreaming, setPhase, incrementQuestion, addAnswer, clearAttachedFile])
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

@@ -1,5 +1,13 @@
 export type MessageRole = 'user' | 'assistant'
 
+export interface AttachedFile {
+  name: string
+  size: number      // bytes
+  mimeType: string
+  extractedText: string
+  truncated: boolean
+}
+
 export interface Message {
   id: string
   role: MessageRole

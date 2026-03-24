@@ -1,16 +1,17 @@
 'use client'
 
-import { useRef, useEffect, useState, useMemo, useId } from 'react'
+import { useRef, useEffect, useState, useMemo, useId, useCallback } from 'react'
 import { useChatStore } from '@/store/chatStore'
 import { MessageBubble } from './MessageBubble'
 import { PhaseStatusBanner } from './PhaseStatusBanner'
+import { FileUploadButton } from './FileUploadButton'
 import { TOTAL_QUESTIONS } from '@/lib/prompts/questions'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useChatActions } from '@/hooks/useChatActions'
-import { ChatPhase } from '@/types/chat'
+import { AttachedFile, ChatPhase } from '@/types/chat'
 
 function headerStatusText(phase: ChatPhase, isGenerating: boolean, answersCount: number): string {
   if (phase === 'questioning') return `Câu hỏi ${Math.min(answersCount + 1, TOTAL_QUESTIONS)}/${TOTAL_QUESTIONS}`
@@ -21,11 +22,19 @@ function headerStatusText(phase: ChatPhase, isGenerating: boolean, answersCount:
 
 export function ChatInterface() {
   const [input, setInput] = useState('')
+  const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputHintId = useId()
 
+  const clearAttachedFile = useCallback(() => setAttachedFile(null), [])
+
   const { messages, isStreaming, phase, answers, outputDocs, isGenerating } = useChatStore()
-  const { textareaRef, handleReset, generateDocs, sendMessage, handleKeyDown } = useChatActions({ input, setInput })
+  const { textareaRef, handleReset, generateDocs, sendMessage, handleKeyDown } = useChatActions({
+    input,
+    setInput,
+    attachedFile,
+    clearAttachedFile,
+  })
 
   // Auto-scroll on new messages / stream chunks
   useEffect(() => {
@@ -138,42 +147,66 @@ export function ChatInterface() {
 
       {/* ── Input area ── */}
       <div className="border-t border-border bg-card/80 backdrop-blur-sm px-4 py-4 flex-shrink-0">
-        <div className="max-w-3xl mx-auto flex gap-3 items-end">
-          <Textarea
-            ref={textareaRef}
-            id="message-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              phase === 'generation'
-                ? 'Hỏi thêm hoặc yêu cầu điều chỉnh...'
-                : 'Nhập câu trả lời của bạn...'
-            }
-            aria-label="Câu trả lời của bạn"
-            aria-describedby={inputHintId}
-            aria-busy={isStreaming}
-            disabled={isStreaming}
-            rows={1}
-            className="flex-1 resize-none bg-surface-overlay border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-violet-600 min-h-[44px] max-h-[200px]"
-          />
-          <Button
-            onClick={sendMessage}
-            disabled={isStreaming || !input.trim()}
-            aria-label={isStreaming ? 'Đang gửi...' : 'Gửi tin nhắn'}
-            className="bg-violet-600 hover:bg-violet-700 text-white px-4 h-[44px] shrink-0 transition-colors"
-          >
-            {isStreaming ? (
-              <Spinner className="h-4 w-4" />
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" aria-hidden="true">
-                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-              </svg>
+        <div className="max-w-3xl mx-auto space-y-2">
+          {/* File chip — shown above textarea when file is attached */}
+          {attachedFile && (
+            <FileUploadButton
+              attachedFile={attachedFile}
+              onAttach={setAttachedFile}
+              onRemove={clearAttachedFile}
+              disabled={isStreaming}
+            />
+          )}
+
+          <div className="flex gap-2 items-end">
+            {/* Paperclip button — only shown when no file attached */}
+            {!attachedFile && (
+              <FileUploadButton
+                attachedFile={null}
+                onAttach={setAttachedFile}
+                onRemove={clearAttachedFile}
+                disabled={isStreaming}
+              />
             )}
-          </Button>
+
+            <Textarea
+              ref={textareaRef}
+              id="message-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                attachedFile
+                  ? 'Thêm ghi chú cho tài liệu (tuỳ chọn)...'
+                  : phase === 'generation'
+                  ? 'Hỏi thêm hoặc yêu cầu điều chỉnh...'
+                  : 'Nhập câu trả lời của bạn...'
+              }
+              aria-label="Câu trả lời của bạn"
+              aria-describedby={inputHintId}
+              aria-busy={isStreaming}
+              disabled={isStreaming}
+              rows={1}
+              className="flex-1 resize-none bg-surface-overlay border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-violet-600 min-h-[44px] max-h-[200px]"
+            />
+            <Button
+              onClick={sendMessage}
+              disabled={isStreaming || (!input.trim() && !attachedFile)}
+              aria-label={isStreaming ? 'Đang gửi...' : 'Gửi tin nhắn'}
+              className="bg-violet-600 hover:bg-violet-700 text-white px-4 h-[44px] shrink-0 transition-colors"
+            >
+              {isStreaming ? (
+                <Spinner className="h-4 w-4" />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" aria-hidden="true">
+                  <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                </svg>
+              )}
+            </Button>
+          </div>
         </div>
         <p id={inputHintId} className="text-center text-xs text-muted-foreground mt-2 select-none">
-          Enter để gửi • Shift+Enter để xuống dòng
+          Enter để gửi • Shift+Enter để xuống dòng • 📎 PDF, DOCX, TXT, MD (≤100MB)
         </p>
       </div>
     </div>
